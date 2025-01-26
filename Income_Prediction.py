@@ -5,9 +5,7 @@ import joblib
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
-from io import BytesIO
 import tempfile
 
 try:
@@ -63,7 +61,7 @@ try:
         # Hyperparameters for GridSearchCV
         param_grid = {
             'n_estimators': [5, 15],
-            'max_features': ['sqrt'],  # Corrected from 'auto' to 'sqrt'
+            'max_features': ['sqrt'],
             'max_depth': [None, 10],
             'min_samples_split': [2, 5],
             'min_samples_leaf': [1, 2],
