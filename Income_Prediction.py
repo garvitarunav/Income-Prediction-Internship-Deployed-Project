@@ -5,7 +5,9 @@ import joblib
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
+from io import BytesIO
 import tempfile
 
 try:
@@ -26,10 +28,10 @@ try:
         data = data.drop(["class", "education_institute", "unemployment_reason", "is_labor_union", "occupation_code_main",
                           "under_18_family", "veterans_admin_questionnaire", "residence_1_year_ago", "old_residence_reg",
                           "old_residence_state", "migration_prev_sunbelt"], axis=1, errors='ignore')
-        
+
         # Convert gender: Male to 1, Female to 0
         data['gender'] = data['gender'].apply(lambda x: 1 if x != ' Female' else 0)
-        
+
         # Convert income_above_limit: Below limit to 0, Above limit to 1
         data["income_above_limit"] = data["income_above_limit"].apply(lambda x: 1 if x == "Above limit" else 0)
 
@@ -61,7 +63,7 @@ try:
         # Hyperparameters for GridSearchCV
         param_grid = {
             'n_estimators': [5, 15],
-            'max_features': ['sqrt'],
+            'max_features': ['sqrt'],  # Corrected from 'auto' to 'sqrt'
             'max_depth': [None, 10],
             'min_samples_split': [2, 5],
             'min_samples_leaf': [1, 2],
@@ -76,15 +78,9 @@ try:
         best_rfc = grid_search.best_estimator_
 
         # Save the model to a temporary file using joblib
-        try:
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.joblib')
-            joblib.dump(best_rfc, temp_file.name)
-            st.session_state.trained_model_path = temp_file.name
-            st.success(f"Model trained and saved at {st.session_state.trained_model_path}")
-        except Exception as e:
-            st.error(f"Error while saving model: {str(e)}")
-
-        return grid_search.best_params_
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.joblib')
+        joblib.dump(best_rfc, temp_file.name)
+        return temp_file.name, grid_search.best_params_
 
     # Option 1: Train Model
     if option == "Train Model":
@@ -97,27 +93,29 @@ try:
             # Train the model if not already trained
             if "trained_model_path" not in st.session_state:
                 with st.spinner("Training the model... Please wait."):
-                    best_params = train_model(data)
+                    try:
+                        # Train the model
+                        st.session_state.trained_model_path, best_params = train_model(data)
 
-                # Display the best hyperparameters
-                st.subheader("Best Hyperparameters")
-                st.write(best_params)
+                        # Display the best hyperparameters
+                        st.subheader("Best Hyperparameters")
+                        st.write(best_params)
 
-                # Option to save the trained model
-                if st.button("Save the Model"):
-                    st.success("Model saved successfully!")
-                    st.write(f"Model saved at: {st.session_state.trained_model_path}")
+                        # Option to save the trained model
+                        if st.button("Save the Model"):
+                            st.success("Model saved successfully!")
+                            st.write(f"Model saved at: {st.session_state.trained_model_path}")
+
+                    except Exception as e:
+                        st.error(f"Error while training the model: {str(e)}")
             else:
                 st.warning("Model is already trained. You can save or use it for prediction.")
 
     # Option 2: Make Prediction
     if option == "Make Prediction":
         if "trained_model_path" in st.session_state:
-            try:
-                # Load the trained model from the temporary file
-                model = joblib.load(st.session_state.trained_model_path)
-            except Exception as e:
-                st.error(f"Error loading model: {str(e)}")
+            # Load the trained model from the temporary file
+            model = joblib.load(st.session_state.trained_model_path)
 
             # Upload test file (without the target column)
             test_file = st.sidebar.file_uploader("Upload your test CSV file", type=["csv"])
@@ -160,6 +158,5 @@ try:
                 )
         else:
             st.warning("Please train and save the model first.")
-
 except Exception as e:
     st.error(f"An error occurred: {str(e)}")
