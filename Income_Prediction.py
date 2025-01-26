@@ -77,10 +77,10 @@ try:
         # Get the best model from grid search
         best_rfc = grid_search.best_estimator_
 
-        # Save the model to a temporary file using joblib
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.joblib')
-        joblib.dump(best_rfc, temp_file.name)
-        return temp_file.name, grid_search.best_params_
+        # Save the model to a static file instead of a temporary file
+        model_path = "trained_model.joblib"
+        joblib.dump(best_rfc, model_path)
+        return model_path, grid_search.best_params_
 
     # Option 1: Train Model
     if option == "Train Model":
@@ -109,7 +109,7 @@ try:
     # Option 2: Make Prediction
     if option == "Make Prediction":
         if "trained_model_path" in st.session_state:
-            # Load the trained model from the temporary file
+            # Load the trained model from the saved file
             model = joblib.load(st.session_state.trained_model_path)
 
             # Upload test file (without the target column)
