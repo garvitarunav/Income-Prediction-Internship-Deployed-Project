@@ -77,10 +77,16 @@ try:
         # Get the best model from grid search
         best_rfc = grid_search.best_estimator_
 
-        # Save the model to a static file instead of a temporary file
-        model_path = "trained_model.joblib"
-        joblib.dump(best_rfc, model_path)
-        return model_path, grid_search.best_params_
+        # Save the model to a temporary file using joblib
+        try:
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.joblib')
+            joblib.dump(best_rfc, temp_file.name)
+            st.session_state.trained_model_path = temp_file.name
+            st.success(f"Model trained and saved at {st.session_state.trained_model_path}")
+        except Exception as e:
+            st.error(f"Error while saving model: {str(e)}")
+
+        return grid_search.best_params_
 
     # Option 1: Train Model
     if option == "Train Model":
@@ -93,7 +99,7 @@ try:
             # Train the model if not already trained
             if "trained_model_path" not in st.session_state:
                 with st.spinner("Training the model... Please wait."):
-                    st.session_state.trained_model_path, best_params = train_model(data)
+                    best_params = train_model(data)
 
                 # Display the best hyperparameters
                 st.subheader("Best Hyperparameters")
@@ -109,8 +115,11 @@ try:
     # Option 2: Make Prediction
     if option == "Make Prediction":
         if "trained_model_path" in st.session_state:
-            # Load the trained model from the saved file
-            model = joblib.load(st.session_state.trained_model_path)
+            try:
+                # Load the trained model from the temporary file
+                model = joblib.load(st.session_state.trained_model_path)
+            except Exception as e:
+                st.error(f"Error loading model: {str(e)}")
 
             # Upload test file (without the target column)
             test_file = st.sidebar.file_uploader("Upload your test CSV file", type=["csv"])
@@ -153,5 +162,6 @@ try:
                 )
         else:
             st.warning("Please train and save the model first.")
+
 except Exception as e:
     st.error(f"An error occurred: {str(e)}")
