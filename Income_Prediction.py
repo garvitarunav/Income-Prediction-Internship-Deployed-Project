@@ -21,14 +21,13 @@ try:
     def convert_df_to_csv(df):
         return df.to_csv(index=False).encode('utf-8')
 
-
     # Function to train the model and save it temporarily
     def train_model(data):
         # Drop unnecessary columns
-        data = data.drop(['ID'], axis=1)
+        data = data.drop(['ID'], axis=1, errors='ignore')
         data = data.drop(["class", "education_institute", "unemployment_reason", "is_labor_union", "occupation_code_main",
-                        "under_18_family", "veterans_admin_questionnaire", "residence_1_year_ago", "old_residence_reg",
-                        "old_residence_state", "migration_prev_sunbelt"], axis=1)
+                          "under_18_family", "veterans_admin_questionnaire", "residence_1_year_ago", "old_residence_reg",
+                          "old_residence_state", "migration_prev_sunbelt"], axis=1, errors='ignore')
         
         # Convert gender: Male to 1, Female to 0
         data['gender'] = data['gender'].apply(lambda x: 1 if x != ' Female' else 0)
@@ -37,14 +36,8 @@ try:
         data["income_above_limit"] = data["income_above_limit"].apply(lambda x: 1 if x == "Above limit" else 0)
 
         # Create new features
-        new1 = pd.DataFrame(data["working_week_per_year"] + data["total_employed"], columns=['wwpy+te'])
-        df1 = pd.concat([new1, data["income_above_limit"]], axis=1)
-
-        new3 = pd.DataFrame(data["working_week_per_year"] - data["occupation_code"], columns=['wwpy-oc'])
-        df3 = pd.concat([new3, data["income_above_limit"]], axis=1)
-
-        # Concatenate the new features with the cleaned data
-        data = pd.concat([new1, new3, data], axis=1)
+        data['wwpy+te'] = data["working_week_per_year"] + data["total_employed"]
+        data['wwpy-oc'] = data["working_week_per_year"] - data["occupation_code"]
 
         # Final dataset columns
         final_data = data[['working_week_per_year', 'gains', 'total_employed', 'industry_code', 'stocks_status', 'wwpy+te', 'wwpy-oc', 'income_above_limit']]
@@ -57,7 +50,7 @@ try:
         df_minority_upsampled = resample(df_minority, replace=True, n_samples=len(df_majority), random_state=42)
         final_df = pd.concat([df_minority_upsampled, df_majority])
 
-        # Now, split the data into X and y for training
+        # Split the data into X and y for training
         X = final_df.drop(["income_above_limit"], axis=1)  # Features
         y = final_df["income_above_limit"]  # Target
 
@@ -70,13 +63,12 @@ try:
         # Hyperparameters for GridSearchCV
         param_grid = {
             'n_estimators': [5, 15],
-            'max_features': ['sqrt'],  # Change 'auto' to 'sqrt'
+            'max_features': ['sqrt'],  # Corrected from 'auto' to 'sqrt'
             'max_depth': [None, 10],
             'min_samples_split': [2, 5],
             'min_samples_leaf': [1, 2],
             'bootstrap': [True]
         }
-
 
         # Perform GridSearchCV to find the best hyperparameters
         grid_search = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=3, n_jobs=-1, verbose=2, scoring='accuracy')
