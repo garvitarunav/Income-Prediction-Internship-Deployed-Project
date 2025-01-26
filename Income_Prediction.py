@@ -70,12 +70,13 @@ try:
         # Hyperparameters for GridSearchCV
         param_grid = {
             'n_estimators': [5, 15],
-            'max_features': ['auto'],
+            'max_features': ['sqrt'],  # Change 'auto' to 'sqrt'
             'max_depth': [None, 10],
             'min_samples_split': [2, 5],
             'min_samples_leaf': [1, 2],
             'bootstrap': [True]
         }
+
 
         # Perform GridSearchCV to find the best hyperparameters
         grid_search = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=3, n_jobs=-1, verbose=2, scoring='accuracy')
