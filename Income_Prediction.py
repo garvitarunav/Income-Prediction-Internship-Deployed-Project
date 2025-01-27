@@ -59,13 +59,13 @@ try:
         # Initialize RandomForestClassifier
         rfc = RandomForestClassifier(random_state=42)
 
-        # Hyperparameters for GridSearchCV
+        # Hyperparameters for GridSearchCV (reduced for efficiency)
         param_grid = {
-            'n_estimators': [5, 15],
+            'n_estimators': [10, 50],
             'max_features': ['sqrt'],
-            'max_depth': [None, 10],
+            'max_depth': [5, 10],
             'min_samples_split': [2, 5],
-            'min_samples_leaf': [1, 2],
+            'min_samples_leaf': [1],
             'bootstrap': [True]
         }
 
@@ -86,7 +86,6 @@ try:
             # Load the uploaded CSV file
             data = pd.read_csv(uploaded_file)
 
-            # Check if model is already trained
             if "trained_model" not in st.session_state:
                 with st.spinner("Training the model... Please wait."):
                     try:
@@ -109,9 +108,9 @@ try:
                             mime="application/octet-stream"
                         )
 
-                        st.success("Model has been downloaded successfully!")
+                        st.success("Model downloaded successfully!")
                     except Exception as e:
-                        st.error(f"Error while training the model: {str(e)}")
+                        st.error(f"Error during model training: {str(e)}")
             else:
                 st.warning("Model is already trained.")
 
