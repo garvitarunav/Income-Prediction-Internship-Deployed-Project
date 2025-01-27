@@ -62,7 +62,7 @@ try:
         # Hyperparameters for GridSearchCV
         param_grid = {
             'n_estimators': [5, 15],
-            'max_features': ['sqrt'],  # Corrected from 'auto' to 'sqrt'
+            'max_features': ['sqrt'],
             'max_depth': [None, 10],
             'min_samples_split': [2, 5],
             'min_samples_leaf': [1, 2],
@@ -97,7 +97,7 @@ try:
                         st.subheader("Best Hyperparameters")
                         st.write(best_params)
 
-                        # Provide download button for the trained model
+                        # Provide option to download the model
                         model_file = BytesIO()
                         joblib.dump(st.session_state.trained_model, model_file)
                         model_file.seek(0)
@@ -109,7 +109,7 @@ try:
                             mime="application/octet-stream"
                         )
 
-                        st.success("Model downloaded successfully!")
+                        st.success("Model has been downloaded successfully!")
                     except Exception as e:
                         st.error(f"Error while training the model: {str(e)}")
             else:
